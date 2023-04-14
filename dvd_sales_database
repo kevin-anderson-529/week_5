@@ -1,0 +1,136 @@
+import psycopg2
+
+config = {
+    'user': 'pcilwlre',
+    'password': 'jEzYqT_GKd4flYMXa7iNhmKR6ib6SdWN',
+    'host': 'heffalump.db.elephantsql.com',
+    'database': 'pcilwlre',
+}
+
+cnx = psycopg2.connect(**config)
+cursor = cnx.cursor()
+
+# All customers in Texas
+query1 = """
+SELECT customer.first_name, customer.last_name
+FROM customer
+JOIN address ON customer.address_id = address.address_id
+JOIN city ON address.city_id = city.city_id
+JOIN country ON city.country_id = country.country_id
+WHERE country.country = 'United States' AND city.city = 'Texas';
+"""
+
+cursor.execute(query1)
+print("All customers in Texas:")
+for row in cursor:
+    print(row)
+
+# Payments above $6.99
+query2 = """
+SELECT customer.first_name, customer.last_name, payment.amount
+FROM customer
+JOIN payment ON customer.customer_id = payment.customer_id
+WHERE payment.amount > 6.99;
+"""
+
+cursor.execute(query2)
+print("\nPayments above $6.99:")
+for row in cursor:
+    print(row)
+
+# Customers names who have made payments over $175
+query3 = """
+SELECT first_name, last_name
+FROM customer
+WHERE customer_id IN (
+  SELECT customer_id
+  FROM payment
+  GROUP BY customer_id
+  HAVING SUM(amount) > 175
+);
+"""
+
+cursor.execute(query3)
+print("\nCustomers who have made payments over $175:")
+for row in cursor:
+    print(row)
+
+# All customers that live in Nepal
+query4 = """
+SELECT customer.first_name, customer.last_name
+FROM customer
+JOIN address ON customer.address_id = address.address_id
+JOIN city ON address.city_id = city.city_id
+JOIN country ON city.country_id = country.country_id
+WHERE country.country = 'Nepal';
+"""
+
+cursor.execute(query4)
+print("\nAll customers that live in Nepal:")
+for row in cursor:
+    print(row)
+
+# Which staff member had the most transactions?
+query5 = """
+SELECT staff.first_name, staff.last_name, COUNT(payment.payment_id) as num_transactions
+FROM staff
+JOIN payment ON staff.staff_id = payment.staff_id
+GROUP BY staff.staff_id
+ORDER BY num_transactions DESC
+LIMIT 1;
+"""
+
+cursor.execute(query5)
+print("\nStaff member with the most transactions:")
+for row in cursor:
+    print(row)
+
+# Film with the most actors
+query6 = """
+SELECT film.title, COUNT(film_actor.actor_id) as num_actors
+FROM film
+JOIN film_actor ON film.film_id = film_actor.film_id
+GROUP BY film.title
+ORDER BY num_actors DESC
+LIMIT 1;
+"""
+
+cursor.execute(query6)
+print("\nFilm with the most actors:")
+for row in cursor:
+    print(row)
+
+# All customers who have made a single payment above $6.99
+query7 = """
+SELECT customer.first_name, customer.last_name
+FROM customer
+WHERE customer.customer_id IN (
+  SELECT DISTINCT customer_id
+  FROM payment
+  WHERE amount > 6.99
+);
+"""
+
+cursor.execute(query7)
+print("\nAll customers who have made a single payment above $6.99:")
+for row in cursor:
+    print(row)
+
+# Which category is most prevalent in the films?
+query8 = """
+SELECT category.name, COUNT(film_category.category_id) as num_films
+FROM category
+JOIN film_category ON category.category_id = film_category.category_id
+GROUP BY category.name
+ORDER BY num_films DESC
+LIMIT 1;
+"""
+
+cursor.execute(query8)
+print("\nCategory most prevalent in the films:")
+for row in cursor:
+    print(row)
+
+
+cursor.close()
+cnx.close()
